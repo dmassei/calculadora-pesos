@@ -1,0 +1,5 @@
+# Informe de tests
+reportes/
+
+# Generado al instalar o construir
+node_modules/

@@ -1,0 +1,155 @@
+{
+  "id": "1",
+  "issue": "1",
+  "titulo": "Calculadora de peso de piezas metálicas por forma, medidas y material",
+  "tipo": "pedido",
+  "escenario": "original",
+  "contexto": "Quien pide necesita estimar el peso de una pieza metálica para cotizar, comprar o mover material, desde el navegador de escritorio o del celular. Hoy el proyecto tiene solo la base de la Fundación: docs/index.html con un título, package.json con \"type\": \"module\" y un test de humo en tests/humo.test.js. Este trabajo construye la aplicación completa: elegir la forma, cargar sus medidas en milímetros, elegir el material y ver el peso en kilogramos con tres decimales, calculado como volumen por densidad. Según las decisiones del proyecto (D-02, D-03, D-04), es HTML, CSS y JavaScript en módulos ES dentro de docs/, sin dependencias ni build; la lógica (volúmenes, conversión de unidades, lectura de números con coma o punto, validación) vive en módulos que no tocan el DOM y que los tests de tests/ importan directamente con node:test. Fórmulas de volumen, con medidas en mm: barra cilíndrica π·(d/2)²·L; barra cuadrada a²·L; barra prismática ancho·alto·L; anillo π/4·(D²−d²)·h; disco π·(d/2)²·e. Peso en kg = volumen en mm³ × densidad en g/cm³ / 1 000 000, redondeado a tres decimales.",
+  "alcance": [
+    "Un selector de forma con las cinco formas del anexo: Barra cilíndrica, Barra cuadrada, Barra prismática, Anillo y Disco.",
+    "Para cada forma, solo los campos de medidas que le corresponden, en milímetros: barra cilíndrica (diámetro, largo); barra cuadrada (lado, largo); barra prismática (ancho, alto, largo); anillo (diámetro exterior, diámetro interior, altura); disco (diámetro, espesor).",
+    "Un selector de material con los diez materiales del anexo y la densidad del material elegido visible en la interfaz.",
+    "La tabla de materiales en un único archivo de datos dentro de docs/, con nombre, densidad en g/cm³ y fuente de cada material; la interfaz y la lógica la leen de ahí.",
+    "Cálculo del peso como volumen geométrico por densidad, mostrado en kg con tres decimales y coma decimal.",
+    "Lectura de medidas con decimales escritos con coma o con punto.",
+    "Validación: medidas mayores que cero, numéricas y, en el anillo, diámetro interior menor que el exterior. Con una medida inválida no se muestra un peso, sino qué medida corregir.",
+    "Interfaz en español, utilizable en escritorio y celular, sin servidor y sin conexión para calcular.",
+    "Tests en tests/ que verifican los criterios de esta spec."
+  ],
+  "fuera_de_alcance": [
+    "Calcular cantidades, costos o totales; solo se muestra el peso de una pieza.",
+    "Guardar datos: ni historial, ni preferencias, ni almacenamiento local, ni cookies.",
+    "Cualquier componente de servidor o llamada a servicios externos.",
+    "Formas o materiales que no estén en el anexo del pedido, y densidades editables por quien la usa.",
+    "Unidades distintas de mm para las medidas y kg para el resultado.",
+    "Separadores de miles en la entrada o en la salida: el pedido no los define y ningún criterio los verifica.",
+    "Límites máximos para las medidas: el pedido no los fija.",
+    "Tests con navegador automatizado (D-03): la interfaz se verifica por su HTML estático y por la lógica que la alimenta."
+  ],
+  "criterios": [
+    {
+      "id": "C-01",
+      "descripcion": "El primer ejemplo del pedido da exactamente el resultado indicado.",
+      "como_se_verifica": "Entrada: forma Barra cilíndrica, diámetro 50 mm, largo 1000 mm, material Acero al carbono (7,85 g/cm³). Resultado esperado: el peso calculado redondeado a tres decimales es 15.413 y el texto que se muestra es \"15,413 kg\".",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-02",
+      "descripcion": "El segundo ejemplo del pedido da exactamente el resultado indicado.",
+      "como_se_verifica": "Entrada: forma Anillo, diámetro exterior 100 mm, diámetro interior 60 mm, altura 20 mm, material Cobre (8,94 g/cm³). Resultado esperado: el peso calculado redondeado a tres decimales es 0.899 y el texto que se muestra es \"0,899 kg\".",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-03",
+      "descripcion": "Para cada forma y cada material del anexo, el peso es el volumen geométrico por la densidad, redondeado a tres decimales.",
+      "como_se_verifica": "Para las 50 combinaciones de las cinco formas y los diez materiales, con medidas fijas por forma (barra cilíndrica d=50, L=1000; barra cuadrada a=40, L=500; barra prismática 100×10×1000; anillo D=100, d=60, h=20; disco d=200, e=10), el peso calculado redondeado a tres decimales es igual a round3(V_mm3 × densidad / 1 000 000), con V según las fórmulas del contexto y la densidad tomada del anexo del pedido. Casos de control: barra cuadrada a=40, L=500, Acero inoxidable 304 → 6,400 kg; barra prismática ancho 100, alto 10, largo 1000, Tungsteno → 19,250 kg; disco d=200, e=10, Inconel 625 → 2,652 kg.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-04",
+      "descripcion": "La lista de formas es exactamente la del anexo y cada forma pide exactamente sus medidas.",
+      "como_se_verifica": "La definición de formas que usa la interfaz contiene cinco formas con los nombres Barra cilíndrica, Barra cuadrada, Barra prismática, Anillo y Disco, y para cada una exactamente estas medidas, en este orden: diámetro, largo; lado, largo; ancho, alto, largo; diámetro exterior, diámetro interior, altura; diámetro, espesor. Cada medida se rotula en español e indica que está en mm.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-05",
+      "descripcion": "Al elegir una forma se muestran solo los campos de medidas que le corresponden.",
+      "como_se_verifica": "La función o módulo que decide qué campos mostrar, dada cada una de las cinco formas, devuelve exactamente las medidas de esa forma según C-04 y ninguna otra. En particular: con Disco no aparecen largo ni lado; con Barra cilíndrica no aparecen espesor, lado ni diámetro interior. La interfaz construye o muestra los campos a partir de esa definición y no tiene campos de medidas fijos en el HTML ajenos a ella.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-06",
+      "descripcion": "La tabla de materiales vive en un único archivo de datos con nombre, densidad y fuente de cada material, y coincide con el anexo.",
+      "como_se_verifica": "Existe un único archivo de datos de materiales dentro de docs/ que contiene exactamente diez materiales, cada uno con nombre, densidad en g/cm³ y fuente (URL), con estos valores: Acero al carbono 7.85; Acero inoxidable 304 8.0; Acero inoxidable 316 8.0; Acero dúplex 2205 7.82; Cobre 8.94; Bronce fosforoso 8.8; Tungsteno 19.25; Inconel 625 8.44; Inconel 718 8.19; Hastelloy C-276 8.89, y con las fuentes del anexo del pedido. Ningún otro archivo de docs/ repite esas densidades como literales numéricos.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-07",
+      "descripcion": "La aplicación muestra la densidad del material elegido.",
+      "como_se_verifica": "Para cada material de la tabla, la lógica que arma el texto de densidad para la interfaz devuelve la densidad de ese material en g/cm³ con coma decimal; por ejemplo, Cobre → texto que contiene \"8,94 g/cm³\" y Tungsteno → texto que contiene \"19,25 g/cm³\". El valor sale del archivo de datos de C-06.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-08",
+      "descripcion": "Las medidas aceptan decimales escritos con coma o con punto.",
+      "como_se_verifica": "La lectura de medidas convierte \"12,5\" y \"12.5\" en 12.5, y \"50\" en 50. Barra cilíndrica con diámetro \"25,4\" y largo \"1000\", y la misma con diámetro \"25.4\", dan el mismo peso con cualquier material.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-09",
+      "descripcion": "Una medida que no es mayor que cero no produce un peso, sino la indicación de qué medida corregir.",
+      "como_se_verifica": "Para cada forma y cada una de sus medidas, con todas las demás medidas válidas, poner esa medida en \"0\", en \"-5\" o vacía hace que el resultado no contenga un peso y que la validación devuelva un error que identifica esa medida por su nombre (por ejemplo, Barra cilíndrica con largo \"0\" → error asociado a \"largo\", sin peso). Si hay varias medidas inválidas, se identifican todas.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-10",
+      "descripcion": "Una medida que no es un número no produce un peso, sino la indicación de qué medida corregir.",
+      "como_se_verifica": "Con todas las demás medidas válidas, una medida con el texto \"abc\", \"1,2,3\" o \"1.2.3\" hace que el resultado no contenga un peso y que la validación devuelva un error que identifica esa medida por su nombre.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-11",
+      "descripcion": "En el anillo, el diámetro interior tiene que ser menor que el exterior.",
+      "como_se_verifica": "Anillo con diámetro exterior 100 y diámetro interior 100, y anillo con diámetro exterior 100 y diámetro interior 120 (altura 20 en ambos): el resultado no contiene un peso y la validación devuelve un error que identifica el diámetro interior e indica que tiene que ser menor que el exterior. Con diámetro interior 99,9 sí se calcula el peso.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-12",
+      "descripcion": "El peso se muestra en kilogramos con exactamente tres decimales y coma decimal.",
+      "como_se_verifica": "La función que formatea el resultado devuelve \"15,413 kg\" para 15.4134, \"6,400 kg\" para 6.4, \"0,899 kg\" para 0.89875 y \"19,250 kg\" para 19.25: siempre tres decimales, coma decimal y la unidad kg.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-13",
+      "descripcion": "La aplicación es estática y calcula sin conexión: no carga recursos de otros orígenes ni hace pedidos de red.",
+      "como_se_verifica": "En docs/, ningún atributo src o href de un script, hoja de estilos, fuente o imagen apunta a una URL absoluta (http:, https: o //), y ningún archivo .js usa fetch, XMLHttpRequest, WebSocket ni import de una URL absoluta. Las URLs de las fuentes de los materiales pueden aparecer como datos o como enlaces de texto, nunca como recursos cargados.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-14",
+      "descripcion": "La aplicación no guarda datos.",
+      "como_se_verifica": "Ningún archivo .js de docs/ usa localStorage, sessionStorage, indexedDB, document.cookie ni caches.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-15",
+      "descripcion": "Solo muestra el peso: no calcula cantidades, costos ni totales.",
+      "como_se_verifica": "docs/index.html no tiene campos de cantidad, precio o costo, ni textos \"total\", \"cantidad\", \"precio\" o \"costo\" (sin distinguir mayúsculas). La lógica de cálculo recibe una sola pieza y devuelve un solo peso.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-16",
+      "descripcion": "La interfaz está en español y funciona en navegadores de escritorio y de celular.",
+      "como_se_verifica": "docs/index.html declara lang=\"es\" en el elemento html, tiene meta viewport con width=device-width, carga la aplicación con <script type=\"module\"> desde un archivo dentro de docs/, y cada control del formulario (selector de forma, selector de material y cada campo de medida que genera la interfaz) tiene una etiqueta asociada con texto en español. Los nombres de formas, medidas, materiales y los mensajes de error están en español.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-17",
+      "descripcion": "La lógica de cálculo y validación se puede probar sin navegador.",
+      "como_se_verifica": "Los módulos de cálculo, lectura de números, validación, formato y datos de materiales se importan desde tests/ con node --test sin errores y no usan document, window ni otras APIs del DOM. Todos los tests de este trabajo corren con el comando de verificar del contrato, sin skips.",
+      "origen": "pedido"
+    }
+  ],
+  "zonas": [
+    "docs/",
+    "tests/"
+  ],
+  "supuestos": [
+    "El disco se calcula como un cilindro corto (π·(d/2)²·espesor) y se ofrece aparte por comodidad: afecta C-03 y C-04.",
+    "Las densidades son valores típicos publicados y pueden variar hasta alrededor de un 1 % según la fuente y la aleación; la aplicación usa exactamente las del anexo: afecta C-03, C-06 y C-07.",
+    "Bronce y superaleaciones son familias; se usan el bronce fosforoso, Inconel 625, Inconel 718 y Hastelloy C-276 como representantes: afecta C-06."
+  ],
+  "decisiones_relacionadas": [
+    "D-01",
+    "D-02",
+    "D-03",
+    "D-04",
+    "D-05"
+  ],
+  "banderas": {
+    "operacion_irreversible": false,
+    "dependencias_nuevas": false,
+    "modifica_tests_existentes": false,
+    "detalle": "Sin dependencias de npm (D-02, D-03). El test de humo de tests/humo.test.js se mantiene sin cambios: docs/index.html sigue empezando con <!doctype html>."
+  }
+}
