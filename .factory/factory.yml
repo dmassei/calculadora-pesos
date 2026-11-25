@@ -1,0 +1,27 @@
+factory: v0.1
+
+perfil:
+  tipo: app-web
+  stack: [html, css, javascript, node-test]
+
+entorno:
+  # Node solo se usa para correr los tests; la aplicación no lo necesita.
+  runtime: node >= 22
+
+verificar:
+  tests: mkdir -p reportes && node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=reportes/junit.xml "tests/**/*.test.js"
+  reporte_junit: reportes/junit.xml
+  minimo_ejecutados: 1
+  skips_permitidos: 0
+
+brain:
+  contexto:
+    - .factory/brain/contexto.md
+    - .factory/brain/decisiones.md
+  specs: .factory/specs
+
+revisores: [codigo, seguridad, ux, ui]
+
+publicacion:
+  tipo: github-pages
+  carpeta: /docs
