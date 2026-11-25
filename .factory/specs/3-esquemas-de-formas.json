@@ -1,0 +1,118 @@
+{
+  "id": "3",
+  "issue": "3",
+  "titulo": "Esquema rotulado de cada forma junto a sus campos de medidas",
+  "tipo": "pedido",
+  "escenario": "cambio",
+  "contexto": "Quien usa la calculadora necesita ver a qué medida de la pieza corresponde cada campo. Hoy, al elegir una forma, docs/js/interfaz.js arma solo los campos de sus medidas dentro del fieldset \"Medidas\" de docs/index.html, a partir de camposDeForma de docs/js/formas.js; no hay ninguna imagen ni esquema. Las medidas de cada forma, con su id y su nombre, están definidas en docs/js/formas.js: barra cilíndrica (diametro \"diámetro\", largo \"largo\"); barra cuadrada (lado \"lado\", largo \"largo\"); barra prismática (ancho \"ancho\", alto \"alto\", largo \"largo\"); anillo (diametro_exterior \"diámetro exterior\", diametro_interior \"diámetro interior\", altura \"altura\"); disco (diametro \"diámetro\", espesor \"espesor\"). El rótulo de cada campo es ese nombre con mayúscula inicial y \" (mm)\". Este trabajo suma, para la forma elegida, un esquema vectorial dibujado dentro de la página, con cada medida señalada y rotulada con su nombre, y una descripción en texto. Según las decisiones del proyecto (D-02, D-03, D-04): sin dependencias ni build, la lógica en módulos sin DOM que los tests importan con node:test, y sin navegador automatizado, de modo que la interfaz se verifica por su HTML estático, por el código de la interfaz y por la lógica que la alimenta. El cálculo, las formas, los materiales, las densidades y las validaciones no cambian.",
+  "alcance": [
+    "Un módulo de lógica nuevo, docs/js/esquemas.js, sin DOM, que para cada id de forma devuelve el esquema de esa forma como marcado SVG en texto, armado a partir de las medidas definidas en docs/js/formas.js.",
+    "Un esquema para cada una de las cinco formas, con cada una de sus medidas señalada por una cota y rotulada con su nombre, y solo esas medidas.",
+    "Una descripción en texto de cada esquema, accesible para lectores de pantalla.",
+    "En docs/index.html, un único contenedor para el esquema junto a los campos de medidas.",
+    "En docs/js/interfaz.js, mostrar el esquema de la forma elegida al cargar la página y reemplazarlo al cambiar de forma.",
+    "Estilos en docs/estilos.css para que el esquema se adapte al ancho disponible en escritorio y en celular.",
+    "Tests nuevos en tests/ que verifican los criterios de esta spec."
+  ],
+  "fuera_de_alcance": [
+    "Cambiar el cálculo, las formas, sus medidas, los materiales, las densidades, la lectura de números, el formato o las validaciones.",
+    "Esquemas que cambien de proporción o muestren valores según las medidas cargadas: el esquema es ilustrativo y depende solo de la forma.",
+    "Imágenes en archivos, recursos cargados desde otro sitio y dependencias nuevas.",
+    "Interacción con el esquema (resaltar la medida al enfocar su campo, animaciones, zoom): el pedido no la pide.",
+    "Modificar los tests existentes o tests/ayuda.js.",
+    "Tests con navegador automatizado (D-03)."
+  ],
+  "criterios": [
+    {
+      "id": "C-01",
+      "descripcion": "Cada una de las cinco formas tiene su esquema, y las cinco son distintas.",
+      "como_se_verifica": "Para cada forma de FORMAS (docs/js/formas.js), la función de docs/js/esquemas.js que recibe el id de la forma devuelve un texto que empieza con \"<svg\" (admitiendo espacios iniciales), termina con \"</svg>\" y tiene un único elemento <svg>. Los cinco textos son distintos entre sí. Con un id que no es de ninguna forma, la función lanza un error.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-02",
+      "descripcion": "Cada esquema señala y rotula todas las medidas de su forma, y solo esas, con el mismo nombre que su campo.",
+      "como_se_verifica": "Para cada forma, el SVG de su esquema tiene exactamente un grupo <g data-medida=\"ID\"> por cada medida de la forma, con ID igual al id de la medida en docs/js/formas.js, y ningún grupo data-medida con otro id. Cada uno de esos grupos contiene al menos un elemento <line>, <path> o <polyline> (la cota que señala la medida) y exactamente un elemento <text> cuyo contenido, sin espacios en los extremos y sin distinguir mayúsculas, es igual al nombre de la medida (por ejemplo \"diámetro exterior\" en el anillo). Fuera de esos grupos no hay elementos <text>. Ejemplos del pedido: Anillo → grupos diametro_exterior, diametro_interior y altura, con los textos \"diámetro exterior\", \"diámetro interior\" y \"altura\"; Barra prismática → grupos ancho, alto y largo, con los textos \"ancho\", \"alto\" y \"largo\".",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-03",
+      "descripcion": "Los rótulos usan los nombres de las medidas, sin valores cargados, y el esquema depende solo de la forma.",
+      "como_se_verifica": "La función de esquemas recibe solo el id de la forma. Ningún <text> del SVG contiene dígitos. Llamarla dos veces con el mismo id devuelve exactamente el mismo texto.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-04",
+      "descripcion": "Cada esquema tiene una descripción en texto para quien no puede verlo.",
+      "como_se_verifica": "El elemento <svg> de cada esquema tiene role=\"img\" y su primer hijo es un elemento <title> no vacío que contiene el nombre de la forma (por ejemplo \"Anillo\") y el nombre de cada una de sus medidas, sin distinguir mayúsculas. El <svg> referencia ese título con aria-labelledby apuntando al id del <title>, y ese id es distinto en cada una de las cinco formas.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-05",
+      "descripcion": "Al elegir una forma se muestra su esquema y ningún otro; al cambiar de forma no queda nada del esquema anterior.",
+      "como_se_verifica": "docs/index.html tiene exactamente un elemento con id=\"esquema\", vacío, y no contiene ningún <svg>. docs/js/interfaz.js importa la función de esquemas desde './esquemas.js', obtiene el elemento con id \"esquema\" y reemplaza todo su contenido (con replaceChildren, innerHTML o equivalente que descarte el contenido anterior) con el esquema de selectorForma.value, tanto al iniciar como en el manejador del evento change del selector de forma. Como cada esquema solo contiene los grupos de las medidas de su forma (C-02), el esquema de Barra prismática no contiene ningún grupo ni texto del anillo (diametro_exterior, diametro_interior, altura).",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-06",
+      "descripcion": "El esquema se muestra junto a los campos de medidas.",
+      "como_se_verifica": "En docs/index.html, el elemento con id=\"esquema\" está dentro del <fieldset> cuya leyenda es \"Medidas\", junto al contenedor con id=\"medidas\".",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-07",
+      "descripcion": "Los esquemas van dentro de la aplicación: no cargan imágenes ni recursos y funcionan sin conexión.",
+      "como_se_verifica": "Ningún SVG de esquema contiene elementos <image>, <use>, <foreignObject>, <script> ni <style>, ni atributos href, xlink:href, src o url(...). docs/ no tiene archivos nuevos de imagen (.svg, .png, .jpg, .jpeg, .gif, .webp). package.json no suma dependencias. Los tests existentes de C-13 de la spec 1 siguen pasando.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-08",
+      "descripcion": "El esquema se adapta al ancho disponible en escritorio y en celular.",
+      "como_se_verifica": "El <svg> de cada esquema tiene atributo viewBox con cuatro números y no tiene atributos width ni height. docs/estilos.css tiene una regla que aplica a los svg dentro de #esquema con max-width: 100% (o width: 100%) y height: auto.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-09",
+      "descripcion": "La lógica de esquemas se puede probar sin navegador.",
+      "como_se_verifica": "docs/js/esquemas.js se importa desde tests/ con node --test sin errores y no usa document, window, navigator, HTMLElement ni globalThis. Los tests de este trabajo corren con el comando de verificar del contrato, sin skips.",
+      "origen": "pedido"
+    },
+    {
+      "id": "C-10",
+      "descripcion": "El cálculo, las formas, los materiales, las densidades y las validaciones no cambian.",
+      "como_se_verifica": "Comparado con la rama base, el trabajo no modifica docs/js/calculo.js, docs/js/numeros.js, docs/js/validacion.js, docs/js/formato.js, docs/js/materiales.js ni docs/js/formas.js.",
+      "origen": "existente"
+    },
+    {
+      "id": "C-11",
+      "descripcion": "Todos los tests que ya existían siguen pasando sin modificarse.",
+      "como_se_verifica": "Comparado con la rama base, el trabajo no modifica ni borra ningún archivo existente de tests/ (ayuda.js, calculo.test.js, estatica.test.js, formas.test.js, formato.test.js, humo.test.js, materiales.test.js, validacion.test.js), y con el comando de verificar del contrato todos pasan. En particular siguen valiendo: docs/index.html sin <input> ni <textarea> fijos, sin los textos \"total\", \"cantidad\", \"precio\" ni \"costo\", y docs/js/interfaz.js con el armado de etiquetas de medida que verifica estatica.test.js.",
+      "origen": "existente"
+    }
+  ],
+  "zonas": [
+    "docs/index.html",
+    "docs/estilos.css",
+    "docs/js/interfaz.js",
+    "docs/js/esquemas.js",
+    "tests/"
+  ],
+  "supuestos": [
+    "Los esquemas se dibujan como gráficos vectoriales (SVG) dentro de la propia página: afecta C-01, C-07 y C-08.",
+    "El esquema se muestra junto a los campos de medidas: afecta C-06.",
+    "Los rótulos usan los nombres de las medidas, sin los valores cargados: afecta C-02 y C-03.",
+    "El esquema es ilustrativo y no cambia de proporción según las medidas cargadas: afecta C-03."
+  ],
+  "decisiones_relacionadas": [
+    "D-02",
+    "D-03",
+    "D-04",
+    "D-05"
+  ],
+  "banderas": {
+    "operacion_irreversible": false,
+    "dependencias_nuevas": false,
+    "modifica_tests_existentes": false,
+    "detalle": "Sin dependencias de npm (D-02, D-03). Los tests existentes y tests/ayuda.js no se tocan; los criterios nuevos se verifican con archivos de test nuevos en tests/."
+  }
+}

@@ -3,11 +3,13 @@ import { FORMAS, camposDeForma } from './formas.js';
 import { MATERIALES, buscarMaterial } from './materiales.js';
 import { calcularPieza } from './calculo.js';
 import { formatearDensidad } from './formato.js';
+import { esquemaDeForma } from './esquemas.js';
 
 const formulario = document.getElementById('calculadora');
 const selectorForma = document.getElementById('forma');
 const selectorMaterial = document.getElementById('material');
 const contenedorMedidas = document.getElementById('medidas');
+const contenedorEsquema = document.getElementById('esquema');
 const textoDensidad = document.getElementById('densidad');
 const enlaceFuente = document.getElementById('fuente');
 const resultado = document.getElementById('resultado');
@@ -59,6 +61,12 @@ function construirCampos() {
     grupo.append(rotulo, campo, error);
     contenedorMedidas.append(grupo);
   }
+}
+
+// Reemplaza el esquema anterior por el de la forma elegida. El marcado sale de esquemas.js,
+// que lo arma solo con las definiciones de formas.js: no lleva datos de quien usa la página.
+function mostrarEsquema() {
+  contenedorEsquema.innerHTML = esquemaDeForma(selectorForma.value);
 }
 
 function leerMedidas() {
@@ -115,11 +123,13 @@ function actualizar(mostrarTodos = false) {
 
 agregarOpciones(selectorForma, FORMAS);
 agregarOpciones(selectorMaterial, MATERIALES);
+mostrarEsquema();
 construirCampos();
 mostrarDensidad();
 actualizar();
 
 selectorForma.addEventListener('change', () => {
+  mostrarEsquema();
   construirCampos();
   actualizar();
 });
